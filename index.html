@@ -21,7 +21,7 @@
 		<link rel="stylesheet" type="text/css" href="index.css">
 	</head>
 	<body>
-		<p id="versionNum">v0.7 beta</p>
+		<p id="versionNum">v0.7.1 beta</p>
 		<div id="maincontainer">
 			<table id="fractalTable">
 				<tr>
@@ -85,7 +85,7 @@
 								<p>y coord for julia rendering</p>	<!--takes a y coord from a mandelbrot fractal to render a julia set from-->
 								<input id="Julia_coordY" type="text" value="0"/><br/>
 								<p>Exponent for mandelbrot rendering</p>	<!--exponent of f(z) = z^n + c-->
-								<input id="mandelbrot_exponent" type="text" value="2"/><br/>
+								<input id="mandelbrot_exponent" type="text" value="2" disabled /><input id="multibrotEnable" type="checkbox" /><br/>
 								<p>Iteration Bounds</p>
 								<input id="fractalbounds" type="text" value="4"/><br/>
 								<p>Coloring Algorithm</p>

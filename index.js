@@ -14,6 +14,7 @@ var yPan_A = 1.5;
 var offsetX = 0;
 var offsetY = 0;
 var multibrot_exp = 2;
+var multibrotSupport = false;
 
 var zoom_B = 200;
 var xPan_B = 1.5;
@@ -166,16 +167,21 @@ function BelongsToSet_Mandelbrot(x, y){
 			//var zx = (Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx))) / d + x;
 			//var zy = Math.pow(-(Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * -Math.sin(multibrot_exp * Math.atan2(cy, cx)) / d + y;
 		}
-		var zx = zMult * Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx)) + x;
-		var zy = zMult * Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.sin(multibrot_exp * Math.atan2(cy, cx)) + y;
+		if (multibrotSupport){
+			var zx = Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx)) + x;
+			var zy = Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.sin(multibrot_exp * Math.atan2(cy, cx)) + y;
+		}else{
+			var zx = Math.pow(cx, 2) - Math.pow(cy, 2) + x;
+			var zy = 2 * cx * cy + y;
+		}
 		//periodicity checking optimization: if a point in the set has been reached before, quick break
 		if (periodicityChecking){
 			if (cx == zx && cy == zy){
 				return 0;
 			}
 		}
-		cx = zx;
-		cy = zy;
+		cx = zx * zMult;
+		cy = zy * zMult;
 		
 		total += histogram[i];
 		
@@ -200,8 +206,13 @@ function BelongsToSet_Julia(x, y, cx, cy){
 			//var zx = (Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx))) / d + x;
 			//var zy = Math.pow(-(Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * -Math.sin(multibrot_exp * Math.atan2(cy, cx)) / d + y;
 		}
-		var zx = zMult * Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx)) + x;
-		var zy = zMult * Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.sin(multibrot_exp * Math.atan2(cy, cx)) + y;
+		if (multibrotSupport){
+			var zx = Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx)) + x;
+			var zy = Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.sin(multibrot_exp * Math.atan2(cy, cx)) + y;
+		}else{
+			var zx = Math.pow(cx, 2) - Math.pow(cy, 2) + x;
+			var zy = 2 * cx * cy + y;
+		}
 		//periodicity checking: if a point in the set has been reached before, quick break
 		if (periodicityChecking){
 			if (cx == zx && cy == zy){
@@ -209,8 +220,8 @@ function BelongsToSet_Julia(x, y, cx, cy){
 			}
 		}
 		
-		cx = zx;
-		cy = zy;
+		cx = zx * zMult;
+		cy = zy * zMult;
 		
 		//if the point exceeds the bounds, color the point based on how quickly it escapes
 		if (Math.pow(cx, 2) + Math.pow(cy, 2) >= bounds){
@@ -315,6 +326,8 @@ function ResetCtlDefaults(){
 	offsetY = 0;
 	$("#mandelbrot_exponent").val(2);
 	multibrot_exp = 2;
+	document.getElementById("multibrotEnable").checked = false;
+	multibrotEnable = false;
 	$("#Julia_coordX").val(0.35);
 	$("#Julia_coordY").val(0);
 	coloringMethod = document.getElementById("fractal_coloringMethod").value = "Escape Time";
@@ -494,6 +507,10 @@ $("#periodicityChecking").click(function(){
 $("#zMult").change(function(){
 	zMult = $("#zMult").val();
 });
+$("#multibrotEnable").change(function(){
+	$("#mandelbrot_exponent").prop("disabled", !$("#multibrotEnable").prop("checked"));
+	multibrotSupport = document.getElementById("multibrotEnable").checked;
+});
 
 //stores color palletes
 function GetColorPallets(){
@@ -645,6 +662,12 @@ $("#mandelbrot_exponent").mouseenter(function(){
 	infoBox.html("Change the value of \"n\" in \"f(z) = z^n + c\" to render multibrot fractals (negative values are slow!)");
 });
 $("#mandelbrot_exponent").mouseleave(function(){
+	clearInfo();
+});
+$("#multibrotEnable").mouseenter(function(){
+	infoBox.html("Enable support for rendering multibrot fractals. Enabling this will drastically increase rendering times!");
+});
+$("#multibrotEnable").mouseleave(function(){
 	clearInfo();
 });
 $("#fractalbounds").mouseenter(function(){
