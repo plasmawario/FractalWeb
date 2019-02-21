@@ -1,0 +1,68 @@
+body{ 
+	background-color: rgb(150, 150, 150);
+	font-family: "Trebuchet MS", "Rockwell", "Bebas Neue";
+}
+p{
+	display:inline-block;
+	margin: 0%;
+}
+input[type="text"]{
+	width: 25%;
+}
+select{
+	width: 45%;
+}
+#versionNum{
+	position: absolute;
+	font-size: 16px;
+	font-weight: bold;
+}
+#infobox{
+	text-align: center;
+	font-weight: bold;
+	font-size: 20px;
+}
+#control_panel{
+	font-size: 25px;
+	font-weight: bold;
+	width: 300px;
+	height: 40px;
+	text-align: center;
+}
+#canvasA_status, #canvasB_status{
+	background-color: rgb(40, 255, 40);
+	background-image: url("loadingbar.gif");
+	font-size: 25px;
+	font-weight: bold;
+	border-radius: 10px;
+	width: 600px;
+	height: 40px;
+	text-align: center;
+}
+#maincontainer{
+	width: 1400px;
+	height: 600px;
+	position: absolute;
+	left: 45%;
+	top: 50%;
+	transform: translate(-50%,-50%);
+}
+#canvas_fractalA, #canvas_fractalB, .controls{
+	margin: 0%;
+	padding: 0%;
+	border: 1px solid #000000;
+	height: 600px;
+	width: 600px;
+}
+.controls{
+	width: 325px;
+}
+#controls_all{
+	height: 296px;
+}
+#controls_A, #controls_B{
+	height: 146px;
+}
+#julia_coordX, #julia_coordY{
+	width: 146px;
+}
