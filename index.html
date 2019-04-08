@@ -1,18 +1,26 @@
 <!--
 * http://www.fractal.org/Bewustzijns-Besturings-Model/Higher-order-Mandelbrot-Fractals.pdf i need this page to help with rendering negative exponent fractals pls ignore you don't need to read this
 * features i'd like to get in:
-* Inverted mandelbrot, julia, tricorn, and tricorn julia fractals
 * Second view set to showcase one fractal canvas along side a cobweb plot and bifurcation diagram of fractals
-* Add the Nova fractal
-* Generally make the page look better somehow
+* Fix the Nova fractal
+* Generally make the page look better somehow again
 * Add Histogram coloring algorithm
 * Add Orbit trap coloring algorithm
 * Make color palettes work properly
+* Multibrot support for inverse fractals
 * Optimizations
-* Make zooming into fractals not a pain in the ass
+* Add the Lambda-plane mandelbrot/julia sets
 * Make a better loading bar
 * Get animated fractals working (specifically animatable julia sets for their corrisponding mandelbrot set simply by clicking and dragging your mouse over said mandelbrot set)
 * Think of some more features to add and improvements
+
+* fixes noted for next update:
+* Updated the UI a little bit
+* Fixed updating canvas properites requiring 2 renders to apply
+* Made zooming into fractals not as big of a pain in the ass, panning can still be a pain though
+* Fixed the Burning Heart and square fractal
+* Added the Inverted Mandelbrot and Julia fractals
+* Temporarily removed the Color Palette options cuz they don't work cuz I suck at coding lmao
 -->
 <!DOCTYPE html>
 <html>
@@ -21,13 +29,13 @@
 		<link rel="stylesheet" type="text/css" href="index.css">
 	</head>
 	<body>
-		<p id="versionNum">v0.7.1 beta</p>
+		<p id="versionNum">v0.7.2 beta</p>
 		<div id="maincontainer">
 			<table id="fractalTable">
 				<tr>
 					<td><p id="canvasA_status">Rendering...</p></td>
 					<td><p id="canvasB_status">Rendering...</p></td>
-					<td><p id="control_panel">Control Panel</p></td>
+					<td><p class="control_panel">Control Panel</p></td>
 				</tr>
 				<tr>
 					<td><canvas id="canvas_fractalA"></canvas></td>
@@ -43,9 +51,9 @@
 									<option value="Julia" >Julia</option>
 								</select><br/>
 								<p>x Pan</p>
-								<input id="X_Pan_A" type="text" value="2"/><br/>
+								<input id="X_Pan_A" type="text" value="200"/><br/>
 								<p>y Pan</p>
-								<input id="Y_Pan_A" type="text" value="1.5"/><br/>
+								<input id="Y_Pan_A" type="text" value="150"/><br/>
 								<p>Zoom</p>
 								<input id="zoom_A" type="text" value="200"/><br/>
 							</div></td>
@@ -60,9 +68,9 @@
 									<option value="Julia" selected="selected">Julia</option>
 								</select><br/>
 								<p>x Pan</p>
-								<input id="X_Pan_B" type="text" value="1.5"/><br/>
+								<input id="X_Pan_B" type="text" value="150"/><br/>
 								<p>y Pan</p>
-								<input id="Y_Pan_B" type="text" value="1.5"/><br/>
+								<input id="Y_Pan_B" type="text" value="150"/><br/>
 								<p>Zoom</p>
 								<input id="zoom_B" type="text" value="200"/><br/>
 							</div></td>
@@ -72,19 +80,19 @@
 								<input id="allrenderbtn" type="button" value="render all"/>
 								<input id="ctlDefaults" type="button" value="restore defaults"/>
 								<input id="AllDefaults" type="button" value="restore all defaults"/><br/>
-								<p>Resolution Multiplier</p>	<!--increase the resolution of the canvases for more detailed fractals-->
+								<p>Resolution Multiplier</p>
 								<input id="resMult" type="text" value="1"/><br/>
-								<p>Iteration Count</p>		<!--max number of iterations (higher = deeper calculations)-->
+								<p>Iteration Count</p>
 								<input id="iterations" type="text" value="250"/><br/>
-								<p>x offset</p>		<!--add an offset to the mandelbrot fractals instead of initializing from 0-->
+								<p>x offset</p>
 								<input id="X_Offset" type="text" value="0"/><br/>
-								<p>y offset</p>		<!--add an offset to the mandelbrot fractals instead of initializing from 0-->
+								<p>y offset</p>
 								<input id="Y_Offset" type="text" value="0"/><br/>
-								<p>x coord for julia rendering</p>	<!--takes an x coord from a mandelbrot fractal to render a julia set from-->
+								<p>x coord for julia rendering</p>
 								<input id="Julia_coordX" type="text" value="0.35"/><br/>
-								<p>y coord for julia rendering</p>	<!--takes a y coord from a mandelbrot fractal to render a julia set from-->
+								<p>y coord for julia rendering</p>
 								<input id="Julia_coordY" type="text" value="0"/><br/>
-								<p>Exponent for mandelbrot rendering</p>	<!--exponent of f(z) = z^n + c-->
+								<p>Exponent for mandelbrot rendering</p>
 								<input id="mandelbrot_exponent" type="text" value="2" disabled /><input id="multibrotEnable" type="checkbox" /><br/>
 								<p>Iteration Bounds</p>
 								<input id="fractalbounds" type="text" value="4"/><br/>
@@ -97,8 +105,8 @@
 								<p>Color Palette</p>
 								<select id="fractal_colorPalette">
 									<option value="Classic" selected="selected">Classic</option>
-									<option value="paletteTEST">TEST</option>
-									<option value="paletteRainbow">Rainbow</option>
+									<!--<option value="paletteTEST">TEST</option>
+									<option value="paletteRainbow">Rainbow</option>-->
 								</select><br/>
 								<p>Periodicity Checking</p>
 								<input id="periodicityChecking" type="checkbox" checked /><br/>
@@ -109,23 +117,69 @@
 					</table></td>
 				</tr>
 				<tr>
-					<td colspan="3"><div id="infobox">Hover over a control on the right to view additional info here</div></td>
+					<td colspan="2"><div id="infobox">Hover over a control on the right to view additional info here</div></td>
+					<!--<td><input class="SwitchViews" type="button" value="Switch views"/></td>-->
+				</tr>
+			</table>
+		</div>
+		<div id="graphcontainer">
+			<table id="graphTable">
+				<tr>
+					<td colspan="2"><p id="canvasC_status">Rendering...</p></td>
+					<td><p class="control_panel">Control Panel</p></td>
+				</tr>
+				<tr>
+					<td><canvas id="CobwebPlot"></canvas></td>
+					<td><table>
+						<div><canvas id="BifurcationDiagram"></canvas></div>
+						<div><canvas id="canvas_fractalC"></canvas></div>
+					</table></td>
+					<td><table>
+						<div class="controls" id="controls_C">
+							<input id="Crenderbtn" type="button" value="Update Infographs" />
+							<input id="Canimate" type="button" value="Animate infographs" /><br/>
+							<!--<input id="CDefaults" type="button" value="restore defaults"/><br/>-->
+							<p>Fractal for canvas C</p>
+							<select id="dropdownC">
+								<option value="Mandelbrot" selected="selected">Mandelbrot</option>
+								<!--<option value="Julia">Julia</option>-->
+							</select><br/>
+							<p>x Pan</p>
+							<input id="X_Pan_C" type="text" value="200"/><br/>
+							<p>y Pan</p>
+							<input id="Y_Pan_C" type="text" value="75"/><br/>
+							<p>Zoom</p>
+							<input id="zoom_C" type="text" value="125"/><br/>
+						</div>
+					</table></td>
+				</tr>
+				<tr>
+					<td colspan="2"><div id="infobox">Hover over a control on the right to view additional info here</div></td>
+					<td><input class="SwitchViews" type="button" value="Switch views"/></td>
 				</tr>
 			</table>
 		</div>
 		
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.js"></script>-->
+		<script src="https://unpkg.com/d3@3/d3.min.js"></script>
+		<script src="https://unpkg.com/function-plot@1/dist/function-plot.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.4.2/math.js"></script>
 		<script>
 			var fractals = ["Test"];
+			var multiSupport = [true, true];
 		</script>
 		<script src="TricornFractal.js"></script>
 		<script src="Tricorn Julia.js"></script>
-		<script src="NovaFractal.js"></script>
+		<!--<script src="NovaFractal.js"></script>-->
 		<script src="SquareFractal.js"></script>
 		<script src="HeartFractal.js"></script>
 		<script src="Burning Ship.js"></script>
 		<script src="Burning Ship Julia.js"></script>
+		<script src="InverseMandelbrot.js"></script>
+		<script src="InverseJulia.js"></script>
+		<!--<script src="LambdaMandelbrot.js"></script>
+		<script src="LambdaJulia.js"></script>-->
 		<script src="index.js"></script>
 	</body>
 </html>

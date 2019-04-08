@@ -1,16 +1,28 @@
 body{ 
 	background-color: rgb(150, 150, 150);
 	font-family: "Trebuchet MS", "Rockwell", "Bebas Neue";
+	overflow: auto;
 }
 p{
 	display:inline-block;
 	margin: 0%;
+	letter-spacing: -0.25px;
+}
+input{
+	border-style: none;
 }
 input[type="text"]{
-	width: 25%;
+	width: 100px;
+	float: right;
+}
+input[type="checkbox"]{
+	float: right;
 }
 select{
-	width: 45%;
+	background-color: rgb(220, 220, 220);
+	float: right;
+	width: 160px;
+	text-align: right;
 }
 #versionNum{
 	position: absolute;
@@ -22,14 +34,14 @@ select{
 	font-weight: bold;
 	font-size: 20px;
 }
-#control_panel{
+.control_panel{
 	font-size: 25px;
 	font-weight: bold;
-	width: 300px;
+	width: 400px;
 	height: 40px;
 	text-align: center;
 }
-#canvasA_status, #canvasB_status{
+#canvasA_status, #canvasB_status, #canvasC_status{
 	background-color: rgb(40, 255, 40);
 	background-image: url("loadingbar.gif");
 	font-size: 25px;
@@ -39,7 +51,10 @@ select{
 	height: 40px;
 	text-align: center;
 }
-#maincontainer{
+#canvasC_status{
+	width: 1200px;
+}
+#maincontainer, #graphcontainer{
 	width: 1400px;
 	height: 600px;
 	position: absolute;
@@ -47,15 +62,21 @@ select{
 	top: 50%;
 	transform: translate(-50%,-50%);
 }
-#canvas_fractalA, #canvas_fractalB, .controls{
+#canvas_fractalA, #canvas_fractalB, #canvas_fractalC, #CobwebPlot, #BifurcationDiagram, .controls{
 	margin: 0%;
 	padding: 0%;
 	border: 1px solid #000000;
 	height: 600px;
 	width: 600px;
 }
+#canvas_fractalC, #BifurcationDiagram{
+	height: 300px;
+}
+#CobwebPlot{
+	background-color: #ffffff;
+}
 .controls{
-	width: 325px;
+	width: 400px;
 }
 #controls_all{
 	height: 296px;
@@ -65,4 +86,12 @@ select{
 }
 #julia_coordX, #julia_coordY{
 	width: 146px;
+}
+
+:disabled{
+	background-color: rgb(255, 200, 200);
+	color: #000000;
+}
+input[type="checkbox"]:disabled{
+	
 }

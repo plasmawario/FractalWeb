@@ -1,11 +1,11 @@
 fractals[1] = "Tricorn Julia";
+multiSupport[3] = true;
 
 function renderTricornJulia(can, ctx){
 	//point for the julia set to render
 	var cx = parseFloat($("#Julia_coordX").val());
 	var cy = parseFloat($("#Julia_coordY").val());
-	var ca = getCanvas(ctx);
-	updateCanvas(ca);
+	getCanvas(updateCanvas(can));
 	console.log("Rendering Tricorn Julia set with point: (" + cx + ", " + cy + ")");
 	
 	for (var x = 0; x < can.width; x++){

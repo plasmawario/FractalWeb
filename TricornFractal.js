@@ -1,8 +1,8 @@
 fractals[0] = "Tricorn";
+multiSupport[2] = true;
 
 function renderTricorn(can, ctx){
-	var ca = getCanvas(ctx);
-	updateCanvas(ca);
+	getCanvas(updateCanvas(can));
 	console.log("Rendering Tricorn");
 	for (var x = 0; x < can.width; x++){
 		for (var y = 0; y < can.height; y++){
@@ -27,15 +27,8 @@ function BelongsToSet_Tricorn(x, y){
 		var cy = offsetY;
 	}
 	
-	var d = -Math.pow((Math.pow(cx, 2) - Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx));
 	for (var i = 0; i < iterationCount; i++){
-		
 		//the code below supports multibrot rendering
-		if (multibrot_exp < 0){
-			if (d == 0) return 0;
-			//var zx = (Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx))) / d + x;
-			//var zy = -Math.pow(-(Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * -Math.sin(multibrot_exp * Math.atan2(cy, cx)) / d + y;
-		}
 		if (multibrotSupport){
 			var zx = Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx)) + x;
 			var zy = -Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.sin(multibrot_exp * Math.atan2(cy, cx)) + y;

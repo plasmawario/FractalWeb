@@ -9,16 +9,20 @@ var bounds = 4;
 //---default control variables---//
 var iterationCount = 250;
 var zoom_A = 200;
-var xPan_A = 2;
-var yPan_A = 1.5;
+var xPan_A = 200;
+var yPan_A = 150;
 var offsetX = 0;
 var offsetY = 0;
 var multibrot_exp = 2;
 var multibrotSupport = false;
 
 var zoom_B = 200;
-var xPan_B = 1.5;
-var yPan_B = 1.5;
+var xPan_B = 150;
+var yPan_B = 150;
+
+var zoom_C = 125;
+var xPan_C = 200;
+var yPan_C = 75;
 
 var zoom;
 var xPan;
@@ -29,9 +33,11 @@ var coloringMethod = document.getElementById("fractal_coloringMethod").value;
 var coloringType = document.getElementById("fractal_colorPalette").value;
 var canvasA_Fractal = "Mandelbrot";
 var canvasB_Fractal = "Julia";
+var canvasC_Fractal = "Mandelbrot";
 
 var canvasA_Status = $("#canvasA_status");
 var canvasB_Status = $("#canvasB_status");
+var canvasC_Status = $("#canvasC_status");
 //--------------------------------//
 
 var mouseHold = false;
@@ -47,6 +53,9 @@ var total = 0;
 
 var colorPalette = [];
 
+//hides graph information when page loads
+$("#graphcontainer").hide();
+
 var canvasA = document.getElementById("canvas_fractalA");
 canvasA.width = 600 * resolutionMultiplier;
 canvasA.height = 600 * resolutionMultiplier;
@@ -57,14 +66,33 @@ canvasB.width = 600 * resolutionMultiplier;
 canvasB.height = 600 * resolutionMultiplier;
 var contextCanvasB = canvasB.getContext("2d");
 
+var canvasC = document.getElementById("canvas_fractalC");
+canvasC.width = 600 * resolutionMultiplier;
+canvasC.height = 300 * resolutionMultiplier;
+var contextCanvasC = canvasC.getContext("2d");
+
+var canvasDiagram = document.getElementById("BifurcationDiagram");
+canvasDiagram.width = 600 * resolutionMultiplier;
+canvasDiagram.height = 300 * resolutionMultiplier;
+var contextCanvasDiagram = canvasDiagram.getContext("2d");
+
+var canvasCobweb = document.getElementById("CobwebPlot");
+canvasCobweb.width = 600 * resolutionMultiplier;
+canvasCobweb.height = 600 * resolutionMultiplier;
+var contextCanvasCobweb = canvasCobweb.getContext("2d");
+
 createAddonFractals();
 
 //initial render of fractals
 A_ButtonRender();
 B_ButtonRender();
+C_ButtonRender();
+renderGrid();
+renderFractalGraph(false);
 
 function renderMandelbrot(can, ctx){
-	updateCanvas(getCanvas(ctx));
+	//updateCanvas(getCanvas(ctx));
+	getCanvas(updateCanvas(can));
 	console.log("Rendering Mandelbrot Set");
 	for (var x = 0; x < can.width; x++){
 		for (var y = 0; y < can.height; y++){
@@ -82,7 +110,8 @@ function renderJulia(can, ctx){
 	//point for the julia set to render
 	var cx = parseFloat($("#Julia_coordX").val());
 	var cy = parseFloat($("#Julia_coordY").val());
-	updateCanvas(getCanvas(ctx));
+	//updateCanvas(getCanvas(ctx));
+	getCanvas(updateCanvas(can));
 	console.log("Rendering Julia set with point: (" + cx + ", " + cy + ")");
 	
 	for (var x = 0; x < can.width; x++){
@@ -129,12 +158,14 @@ function getCanvas(ctx){
 		zoom = zoom_A;
 		xPan = xPan_A;
 		yPan = yPan_A;
-		return "A";
 	}else if (ctx == contextCanvasB){
 		zoom = zoom_B;
 		xPan = xPan_B;
 		yPan = yPan_B;
-		return "B";
+	}else if (ctx == contextCanvasC){
+		zoom = zoom_C;
+		xPan = xPan_C;
+		yPan = yPan_C;
 	}
 }
 
@@ -156,17 +187,11 @@ function BelongsToSet_Mandelbrot(x, y){
 		return 0;
 	}*/ //Only works with the original unedited mandelbrot, this may be cut out
 	
-	var d = Math.pow((Math.pow(cx, 2) - Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx));
 	total = 0;	//for histogram coloring
 	for (var i = 0; i < iterationCount; i++){
 		//what if you put a complex number as the exponent? :thinking:
 		
 		//the code below supports multibrot rendering and negative multibrot exponents, at a cost of increased rendering time
-		if (multibrot_exp < 0){
-			if (d == 0) return 0;
-			//var zx = (Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx))) / d + x;
-			//var zy = Math.pow(-(Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * -Math.sin(multibrot_exp * Math.atan2(cy, cx)) / d + y;
-		}
 		if (multibrotSupport){
 			var zx = Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.cos(multibrot_exp * Math.atan2(cy, cx)) + x;
 			var zy = Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.sin(multibrot_exp * Math.atan2(cy, cx)) + y;
@@ -174,6 +199,7 @@ function BelongsToSet_Mandelbrot(x, y){
 			var zx = Math.pow(cx, 2) - Math.pow(cy, 2) + x;
 			var zy = 2 * cx * cy + y;
 		}
+		
 		//periodicity checking optimization: if a point in the set has been reached before, quick break
 		if (periodicityChecking){
 			if (cx == zx && cy == zy){
@@ -248,6 +274,154 @@ function ColorFractalBefore(cx, cy, i){
 	}
 }
 
+//-----draw grid-----//
+function renderGrid(){
+	//draw origin lines
+	contextCanvasCobweb.beginPath();
+	contextCanvasCobweb.lineWidth = 2;
+	contextCanvasCobweb.strokeStyle = "#000000";
+	contextCanvasCobweb.moveTo(0, canvasCobweb.height / 2);
+	contextCanvasCobweb.lineTo(canvasCobweb.width, canvasCobweb.height / 2);
+	contextCanvasCobweb.stroke();
+	
+	contextCanvasCobweb.beginPath();
+	contextCanvasCobweb.lineWidth = 2;
+	contextCanvasCobweb.strokeStyle = "#000000";
+	contextCanvasCobweb.moveTo(canvasCobweb.width / 2, 0);
+	contextCanvasCobweb.lineTo(canvasCobweb.width / 2, canvasCobweb.height);
+	contextCanvasCobweb.stroke();
+	
+	
+	//stuff for drawing other lines n stuff
+	var values = [6, 3, 1.5, 1.2];
+	
+	for (var i = 0; i < values.length; i ++){
+		contextCanvasCobweb.beginPath();
+		contextCanvasCobweb.lineWidth = 1;
+		contextCanvasCobweb.strokeStyle = "#000000";
+		contextCanvasCobweb.moveTo(0, canvasCobweb.height / values[i]);
+		contextCanvasCobweb.lineTo(canvasCobweb.width, canvasCobweb.height / values[i]);
+		contextCanvasCobweb.stroke();
+		
+		contextCanvasCobweb.beginPath();
+		contextCanvasCobweb.lineWidth = 1;
+		contextCanvasCobweb.strokeStyle = "#000000";
+		contextCanvasCobweb.moveTo(canvasCobweb.width / values[i], 0);
+		contextCanvasCobweb.lineTo(canvasCobweb.width / values[i], canvasCobweb.height);
+		contextCanvasCobweb.stroke();
+	}
+	
+	contextCanvasCobweb.beginPath();
+	contextCanvasCobweb.lineWidth = 1;
+	contextCanvasCobweb.strokeStyle = "#000000";
+	contextCanvasCobweb.moveTo(0, canvasCobweb.height);
+	contextCanvasCobweb.lineTo(canvasCobweb.width, 0);
+	contextCanvasCobweb.stroke();
+	
+}
+function XC(x){
+	return (x + 3 / (3 + 3) * canvasCobweb.width);
+}
+function YC(y){
+	return canvasCobweb.height - (y + 3 / (3 + 3) * canvasCobweb.width);
+	//if y = 0 then this will return 300. It needs to return -400 as the first value. The bigger y is, the lower the return value
+	//if y = 700 then the result will be -400 as needed
+	//y is currently being put in as 9. Somehow this needs to become 700
+}
+function renderFractalGraph(animate){
+	
+	/*var zx = Math.pow(cx, 2) - Math.pow(cy, 2) + x;
+	var zy = 2 * cx * cy + y;*/
+	//http://matt.might.net/articles/rendering-mathematical-functions-in-javascript-with-canvas-html/
+	
+	var first = true;
+	var h = canvasCobweb.width / 6;
+	
+	if (animate){
+		var cobwebanimate = setInterval(function(){
+			//clears canvas and redraws
+			contextCanvasCobweb.clearRect(0, 0, canvasCobweb.width, canvasCobweb.height);
+			renderGrid();
+			contextCanvasCobweb.beginPath();
+			for (var x = (canvasCobweb.width * -1); x <= canvasCobweb.width; x ++){
+				//function for parabola
+				var y = x * x + 2;
+				if (first){
+					contextCanvasCobweb.moveTo(XC(x * 10), YC(y));
+					first = false;
+				}else{
+					contextCanvasCobweb.lineTo(XC(x * 10), YC(y + h));
+				}
+			}
+			contextCanvasCobweb.stroke();
+			
+			//init drawing cobweb plot line from origin to parabola
+			contextCanvasCobweb.beginPath();
+			contextCanvasCobweb.moveTo(canvasCobweb.width / 2, canvasCobweb.height / 2);
+			contextCanvasCobweb.lineWidth = 1.5;
+			contextCanvasCobweb.strokeStyle = "#00ff00";
+			contextCanvasCobweb.lineTo(canvasCobweb.width / 2, YC(h));
+			contextCanvasCobweb.stroke();
+			
+			//line from parabola to x
+			contextCanvasCobweb.beginPath();
+			contextCanvasCobweb.moveTo(canvasCobweb.width / 2, YC(h));
+			contextCanvasCobweb.lineTo(XC(h), YC(h));
+			contextCanvasCobweb.stroke();
+			var lineLastX = XC(h);
+			var lineLastY = YC(h);
+			var y = 0;
+			//continuing cobweb plot line until max iteraion value
+			y = YC(h) * YC(h) / YC(-h);
+			for (var j = 0; j < 1; j++){
+				//line from x to parabola
+				contextCanvasCobweb.beginPath();
+				contextCanvasCobweb.moveTo(lineLastX, lineLastY);
+				contextCanvasCobweb.lineTo(lineLastX, y);
+				//630000 / 900 = 700
+				contextCanvasCobweb.stroke();
+				//lineLastX = XC(h);
+				//lineLastY = YC(y);
+				
+				//line from parabola to x
+				/*contextCanvasCobweb.beginPath();
+				contextCanvasCobweb.moveTo(lineLastX), YC(y));
+				contextCanvasCobweb.lineTo(canvasCobweb.width / 2, YC(h));
+				contextCanvasCobweb.stroke();
+				lineLastX = canvasCobweb.width / 2;
+				lineLastY = YC(y);*/
+			}
+			
+			h -= 0.25;
+			//console.log(h)
+			if (h == -225){
+				clearInterval(cobwebanimate);
+			}
+		}, 50);
+	}else{
+		contextCanvasCobweb.beginPath();
+		for (var x = (canvasCobweb.width * -1); x <= canvasCobweb.width; x ++){
+			//Function to graph
+			var y = x * x;
+			if (first){
+				contextCanvasCobweb.moveTo(XC(x * 10), YC(y));
+				first = false;
+			}else{
+				contextCanvasCobweb.lineTo(XC(x * 10), YC(y));
+			}
+		}
+		contextCanvasCobweb.stroke();
+		
+	}
+	
+	
+}
+$("#Canimate").click(function(){
+	console.log("Animating infographs");
+	setInterval(renderFractalGraph(true), 50);
+});
+//-------------------//
+
 //-----Addon fractals-----//
 function createAddonFractals(){
 	for (var i = 0; i < fractals.length; i++){
@@ -271,22 +445,36 @@ function createAddonFractals(){
 
 //update canvas properties
 function updateCanvas(canv){
-	if (canv == "A"){
+	if (canv == canvasA){
 		canvasA.width = 600 * resolutionMultiplier;
 		canvasA.height = 600 * resolutionMultiplier;
-		xPan_A = $("#X_Pan_A").val() * resolutionMultiplier;
-		yPan_A = $("#Y_Pan_A").val() * resolutionMultiplier;
 		zoom_A = $("#zoom_A").val() * resolutionMultiplier;
-	}else if (canv == "B"){
+		xPan_A = ($("#X_Pan_A").val() / (zoom_A / 2)) * resolutionMultiplier;
+		yPan_A = ($("#Y_Pan_A").val() / (zoom_A / 2)) * resolutionMultiplier;
+		return contextCanvasA;
+	}else if (canv == canvasB){
 		canvasB.width = 600 * resolutionMultiplier;
 		canvasB.height = 600 * resolutionMultiplier;
-		xPan_B = $("#X_Pan_B").val() * resolutionMultiplier;
-		yPan_B = $("#Y_Pan_B").val() * resolutionMultiplier;
 		zoom_B = $("#zoom_B").val() * resolutionMultiplier;
+		xPan_B = ($("#X_Pan_B").val() / (zoom_B / 2)) * resolutionMultiplier;
+		yPan_B = ($("#Y_Pan_B").val() / (zoom_B / 2)) * resolutionMultiplier;
+		return contextCanvasB;
+	}else if (canv == canvasC){
+		canvasC.width = 600 * resolutionMultiplier;
+		canvasC.height = 300 * resolutionMultiplier;
+		zoom_C = $("#zoom_C").val() * resolutionMultiplier;
+		xPan_C = ($("#X_Pan_C").val() / (zoom_C / 2)) * resolutionMultiplier;
+		yPan_C = ($("#Y_Pan_C").val() / (zoom_C / 2)) * resolutionMultiplier;
+		return contextCanvasC;
 	}
 }
 
 //-----Control functions-----//
+$(".SwitchViews").click(function(){
+	$("#maincontainer").toggle();
+	$("#graphcontainer").toggle();
+});
+
 $("#fractal_coloringMethod").click(function(){
 		coloringMethod = document.getElementById("fractal_coloringMethod").value;
 });
@@ -306,14 +494,19 @@ $("#AllDefaults").click(function(){
 	ResetCtlDefaults();
 });
 function ResetADefaults(){
-	$("#X_Pan_A").val(2);
-	$("#Y_Pan_A").val(1.5);
+	$("#X_Pan_A").val(200);
+	$("#Y_Pan_A").val(150);
 	$("#zoom_A").val(200);
 }
 function ResetBDefaults(){
-	$("#X_Pan_B").val(1.5);
-	$("#Y_Pan_B").val(1.5);
+	$("#X_Pan_B").val(150);
+	$("#Y_Pan_B").val(150);
 	$("#zoom_B").val(200);
+}
+function ResetCDefaults(){
+	$("#X_Pan_C").val(150);
+	$("#Y_Pan_C").val(125);
+	$("#zoom_C").val(150);
 }
 function ResetCtlDefaults(){
 	$("#resMult").val(1);
@@ -345,6 +538,9 @@ $("#Arenderbtn").click(function(){
 });
 $("#Brenderbtn").click(function(){
 		B_ButtonRender();
+});
+$("#Crenderbtn").click(function(){
+		C_ButtonRender();
 });
 $("#allrenderbtn").click(function(){
 		A_ButtonRender();
@@ -400,6 +596,32 @@ function B_ButtonRender(){
 		canvasB_Status.css("background-image", "url()");
 	}
 }
+function C_ButtonRender(){
+	try{
+		//update canvas status
+		setTimeout(function(){
+			canvasC_Status.html("Rendering...");
+			canvasC_Status.css("background-color", "rgb(255, 40, 40)");
+			canvasC_Status.css("background-image", "url(loadingbar.gif)");
+		}, 0);
+		//begin re-rendering
+		setTimeout(function(){
+			var dropdown = $("#dropdownC").val();
+			getFractalDropdown(canvasC, contextCanvasC, dropdown);
+		}, 30);
+		//update canvas status
+		setTimeout(function(){
+			canvasC_Status.html("Standby");
+			canvasC_Status.css("background-color", "rgb(40, 255, 40)");
+			canvasC_Status.css("background-image", "url()");
+		}, 60);
+	}catch(ex){
+		console.log("There was an error while rendering the fractal! Error type: " + ex + ": " + ex.message);
+		canvasC_Status.html("Error");
+		canvasC_Status.css("background-color", "rgb(255, 40, 40)");
+		canvasC_Status.css("background-image", "url()");
+	}
+}
 
 //multibrot exponent
 $("#mandelbrot_exponent").change(function(){
@@ -426,6 +648,14 @@ function getFractalDropdown(can, ctx, drop){
 		renderBurningShip(can, ctx);
 	}else if (drop == "Burning Ship Julia"){
 		renderBurningShipJulia(can, ctx);
+	}else if (drop == "Inverse Mandelbrot"){
+		renderInverseMandelbrot(can, ctx);
+	}else if (drop == "Inverse Julia"){
+		renderInverseJulia(can, ctx);
+	}else if (drop == "Lambda Mandelbrot"){
+		renderLambdaMandelbrot(can, ctx);
+	}else if (drop == "Lambda Julia"){
+		renderLambdaJulia(can, ctx);
 	}
 }
 
@@ -469,7 +699,7 @@ $("#canvas_fractalA").mousemove(function(event){
 });
 $("#canvas_fractalB").mousemove(function(event){
 	if (mouseHold){
-		if ($("#dropdownB").val() == "Mandelbrot" || $("#dropdownA").val() == "Tricorn" || $("#dropdownA").val() == "Burning Ship"){
+		if ($("#dropdownB").val() == "Mandelbrot" || $("#dropdownB").val() == "Tricorn" || $("#dropdownB").val() == "Burning Ship"){
 			mandelbrotMouseCoords("B", event);
 		}
 	}
@@ -492,10 +722,31 @@ function mandelbrotMouseCoords(fractal, e){
 		mouseY = e.pageY - offsetY;
 		
 		//gets coords of mouse based on offset from main page from the fractal canvas
-		$("#Julia_coordX").val(parseFloat(((mouseX) / zoom_B - xPan_B).toFixed(4)));
-		$("#Julia_coordY").val(parseFloat(((mouseY) / zoom_B - yPan_B).toFixed(4)));
+		$("#Julia_coordX").val(parseFloat(((mouseX) / zoom_A - xPan_A).toFixed(4)));
+		$("#Julia_coordY").val(parseFloat(((mouseY) / zoom_A - yPan_A).toFixed(4)));
 	}
 }
+
+$("#canvas_fractalA").bind("mousewheel", function(e){
+	mouseX = event.clientX - $("#canvas_fractalA").offset().left;
+	mouseY = event.clientY - $("#canvas_fractalA").offset().top;
+	
+	if (e.originalEvent.wheelDelta < 0){
+		var scrlDir = -2;
+	}else{
+		var scrlDir = 2;
+	}
+	$("#zoom_A").val(function(index, currentvalue){
+		$("#zoom_A").val(currentvalue += scrlDir);
+	});
+});
+//check if the fractal selected by the dropdown supports multibrot rendering. If not, disable the checkbox
+$("#dropdownA").change(function(){
+	$("#multibrotEnable").prop("disabled", !multiSupport[document.getElementById("dropdownA").selectedIndex]);
+});
+$("#dropdownB").change(function(){
+	$("#multibrotEnable").prop("disabled", !multiSupport[document.getElementById("dropdownB").selectedIndex]);
+});
 
 $("#fractalbounds").change(function(){
 	bounds = $("#fractalbounds").val();

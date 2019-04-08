@@ -1,8 +1,8 @@
 fractals[4] = "Burning Heart";
+multiSupport[6] = false;
 
 function renderHeart(can, ctx){
-	var ca = getCanvas(ctx);
-	updateCanvas(ca);
+	getCanvas(updateCanvas(can));
 	console.log("Rendering Burning Heart");
 	for (var x = 0; x < can.width; x++){
 		for (var y = 0; y < can.height; y++){
@@ -45,7 +45,7 @@ function BelongsToSet_Heart(x, y){
 			//var zy = -Math.pow((Math.pow(cx, 2) + Math.pow(cy, 2)), (multibrot_exp / 2)) * Math.sin(multibrot_exp * Math.atan2(cy, cx)) + y;
 		//}else{
 			var zx = Math.pow(cx, 2) + Math.pow(cy, 3) + x;
-			var zy = -2 * cx * cy + y;
+			var zy = 2 * cx * cy + y;
 		//}
 		
 		//periodicity checking: if a point in the set has been reached before, quick break
